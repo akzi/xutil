@@ -24,4 +24,12 @@ namespace xutil
 
 	template<typename Ret, typename ...Args>
 	struct function_traits<std::function<Ret(Args...)>> : function_traits<Ret(Args...)> { };
+
+	template<typename FuncType>
+	static inline
+		typename xutil::function_traits<FuncType>::stl_function_type
+		to_function(FuncType func)
+	{
+		return  typename xutil::function_traits<FuncType>::stl_function_type{ func };
+	}
 }
