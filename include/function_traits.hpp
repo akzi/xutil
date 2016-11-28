@@ -1,4 +1,6 @@
 #pragma once
+#include <tuple>
+
 namespace xutil
 {
 	template<typename>
@@ -7,7 +9,16 @@ namespace xutil
 	template<typename Ret, typename ...Args>
 	struct function_traits<Ret(Args...)>
 	{
+		enum { arity = sizeof...(Args)};
 		typedef std::function<Ret(Args...)> stl_function_type;
+		using tuple_type = std::tuple<typename std::remove_reference<typename std::remove_const<Args>::type>::type...>;
+		
+		template<int index>
+		struct args
+		{
+			static_assert(index < arity, "out of function Args's range");
+			using type = typename std::tuple_element<index, tuple_type>::type;
+		};
 	};
 
 	template<typename Ret, typename ...Args>
