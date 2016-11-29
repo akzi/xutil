@@ -15,6 +15,7 @@ namespace xutil
 #endif
 			}
 		};
+		
 		struct strncasecmper
 		{
 			bool operator()(const char *left, const char *right, std::size_t len)
@@ -26,5 +27,13 @@ namespace xutil
 #endif
 			}
 		};
+
+		struct strncmper
+		{
+			bool operator()(const char *left, const char *right, std::size_t len)
+			{
+				return strncmp(left, right, len) == 0;
+			}
+	};
 	}
 }
