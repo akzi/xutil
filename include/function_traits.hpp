@@ -39,7 +39,7 @@ namespace xutil
 	template<typename FuncType>
 	static inline
 		typename xutil::function_traits<FuncType>::stl_function_type
-		to_function(FuncType func)
+		to_function(FuncType &&func)
 	{
 		return  typename xutil::function_traits<FuncType>::stl_function_type{ func };
 	}
