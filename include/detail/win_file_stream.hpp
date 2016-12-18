@@ -102,7 +102,7 @@ namespace xutil
 					type = FILE_ATTRIBUTE_TEMPORARY;
 				}
 				share = FILE_SHARE_READ | FILE_SHARE_WRITE;
-				handle_ = CreateFileA((LPCSTR)filepath.c_str(),
+				handle_ = CreateFile((LPCSTR)filepath.c_str(),
 					access,
 					share,
 					0,

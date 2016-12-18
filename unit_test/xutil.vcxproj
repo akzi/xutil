@@ -21,12 +21,13 @@
   <ItemGroup>
     <ClInclude Include="..\include\detail\file_stream_impl.hpp" />
     <ClInclude Include="..\include\detail\unix_file_stream.hpp" />
+    <ClInclude Include="..\include\detail\unix_vfs.hpp" />
     <ClInclude Include="..\include\detail\win_file_stream.hpp" />
+    <ClInclude Include="..\include\detail\win_vfs.hpp" />
     <ClInclude Include="..\include\file_stream.hpp" />
     <ClInclude Include="..\include\functional.hpp" />
     <ClInclude Include="..\include\function_traits.hpp" />
     <ClInclude Include="..\include\make_index_sequence.hpp" />
-    <ClInclude Include="xtest.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7DDDED2C-3CA9-4882-8CAB-50A492ADF96D}</ProjectGuid>

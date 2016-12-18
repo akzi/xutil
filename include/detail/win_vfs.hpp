@@ -13,7 +13,7 @@ namespace xutil
 				DWORD nByte;
 				BOOL rc;
 				nByte = sizeof(zUser);
-				if (!GetUserNameA(zUser, &nByte))
+				if (!GetUserName(zUser, &nByte))
 					return{};
 				return std::string(zUser, nByte);
 			}
@@ -31,7 +31,7 @@ namespace xutil
 			std::string operator()()
 			{
 				char buffer[1024];
-				DWORD n = GetTempPathA(sizeof(buffer), buffer);
+				DWORD n = GetTempPath(sizeof(buffer), buffer);
 				if (n < 1)
 					return "C:\\Windows\\Temp";
 				return std::string(buffer, n);
@@ -46,7 +46,7 @@ namespace xutil
 				DWORD dwAccess = GENERIC_READ;
 				DWORD dwCreate = OPEN_EXISTING;
 				HANDLE pHandle;
-				pHandle = CreateFileA(path.c_str(), dwAccess, dwShare, 0, dwCreate, dwType, 0);
+				pHandle = CreateFile(path.c_str(), dwAccess, dwShare, 0, dwCreate, dwType, 0);
 				if (pHandle == INVALID_HANDLE_VALUE)
 					return nullptr;
 				return pHandle;
@@ -57,7 +57,7 @@ namespace xutil
 		{
 			bool operator()(const std::string &path)
 			{
-				return !!SetCurrentDirectoryA(path.c_str());
+				return !!SetCurrentDirectory(path.c_str());
 			}
 		};
 		struct getcwd
@@ -65,7 +65,7 @@ namespace xutil
 			std::string operator()()
 			{
 				char buffer[2048] = { 0 };
-				GetCurrentDirectoryA(sizeof(buffer), buffer);
+				GetCurrentDirectory(sizeof(buffer), buffer);
 				return std::string(buffer);
 			}
 		};
@@ -73,14 +73,14 @@ namespace xutil
 		{
 			bool operator()(const std::string &path)
 			{
-				return CreateDirectoryA(path.c_str(), 0);
+				return CreateDirectory(path.c_str(), 0);
 			}
 		};
 		struct rmdir
 		{
 			bool operator()(const std::string &path)
 			{
-				return !!RemoveDirectoryA(path.c_str());
+				return !!RemoveDirectory(path.c_str());
 			}
 		};
 		struct isdir
@@ -88,7 +88,7 @@ namespace xutil
 			bool operator()(const std::string &path)
 			{
 				DWORD dwAttr;
-				dwAttr = GetFileAttributesA(path.c_str());
+				dwAttr = GetFileAttributes(path.c_str());
 				if (dwAttr == INVALID_FILE_ATTRIBUTES)
 					return false;
 				return (dwAttr & FILE_ATTRIBUTE_DIRECTORY);
@@ -98,29 +98,29 @@ namespace xutil
 		{
 			bool operator()(const std::string &_old, const std::string &_new)
 			{
-				return !!MoveFileA(_old.c_str(), _new.c_str());
+				return !!MoveFile(_old.c_str(), _new.c_str());
 			}
 		};
-		struct real_path
+		struct realpath
 		{
 			std::string operator()(const std::string &path)
 			{
 				DWORD len;
 				std::string buffer;
-				len = GetFullPathNameA(path.c_str(), 0, 0, 0);
+				len = GetFullPathName(path.c_str(), 0, 0, 0);
 				if (len > 0)
 				{
 					buffer.resize(len);
-					GetFullPathNameA(path.c_str(), len, (char*)buffer.data(), 0);
+					GetFullPathName(path.c_str(), len, (char*)buffer.data(), 0);
 				}
 				return std::move(buffer);
 			}
 		};
-		struct  unlink
+		struct unlink
 		{
 			bool operator()(const std::string &path)
 			{
-				return !!DeleteFileA(path.c_str());
+				return !!DeleteFile(path.c_str());
 			}
 		};
 		struct disk_free_space
@@ -140,7 +140,7 @@ namespace xutil
 					buffer = path;
 				else
 					buffer = path.substr(0, pos);
-				rc = GetDiskFreeSpaceA(buffer.c_str(),
+				rc = GetDiskFreeSpace(buffer.c_str(),
 					&dwSectPerClust,
 					&dwBytesPerSect,
 					&dwFreeClusters,
@@ -170,7 +170,7 @@ namespace xutil
 					buffer = path;
 				else
 					buffer = path.substr(0, pos);
-				if (!GetDiskFreeSpaceA(buffer.c_str(),
+				if (!GetDiskFreeSpace(buffer.c_str(),
 					&dwSectPerClust,
 					&dwBytesPerSect,
 					&dwFreeClusters,
@@ -183,12 +183,112 @@ namespace xutil
 			}
 
 		};
+		struct is_file 
+		{
+			bool operator()(const std::string zPath)
+			{
+				DWORD dwAttr = GetFileAttributes(zPath.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return false;
+				}
+				return (dwAttr & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE));
+			}
+		};
+		struct is_link 
+		{
+			bool operator()(const std::string &path)
+			{
+				DWORD dwAttr= GetFileAttributes(path.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return false;
+				}
+				return (dwAttr & FILE_ATTRIBUTE_REPARSE_POINT);
+			}
+		};
+		struct is_writable
+		{
+			bool operator()(const std::string &path)
+			{
+				DWORD dwAttr= GetFileAttributes(path.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return false;
+				}
+				if ((dwAttr & (FILE_ATTRIBUTE_ARCHIVE | FILE_ATTRIBUTE_NORMAL)) == 0)
+				{
+					return false;
+				}
+				if (dwAttr & FILE_ATTRIBUTE_READONLY)
+				{
+					return false;
+				}
+				return true;
+			}
+		};
+		struct is_executable
+		{
+			bool operator()(const std::string &zPath)
+			{
+				DWORD dwAttr = GetFileAttributes(zPath.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return false;
+				}
+				if ((dwAttr & FILE_ATTRIBUTE_NORMAL) == 0)
+				{
+					return false;
+				}
+				return true;
+			}
+		};
+		struct file_type
+		{
+			enum type
+			{
+				e_file,
+				e_dir,
+				e_link,
+				e_block,
+				e_unknown,
+			};
+
+			type operator()(const std::string &path)
+			{
+				DWORD dwAttr;
+				dwAttr = GetFileAttributes(path.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return type::e_unknown;
+				}
+				if (dwAttr & (FILE_ATTRIBUTE_HIDDEN | 
+								FILE_ATTRIBUTE_NORMAL | 
+								FILE_ATTRIBUTE_ARCHIVE))
+				{
+					return type::e_file;
+				}
+				else if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
+				{
+					return type::e_dir;
+				}
+				else if (dwAttr & FILE_ATTRIBUTE_REPARSE_POINT)
+				{
+					return type::e_link;
+				}
+				else if (dwAttr & (FILE_ATTRIBUTE_DEVICE))
+				{
+					return type::e_block;
+				}
+				return type::e_unknown;
+			}
+		};
 		struct file_exists
 		{
 			bool operator()(const std::string &path)
 			{
 				DWORD dwAttr;
-				dwAttr = GetFileAttributesA(path.c_str());
+				dwAttr = GetFileAttributes(path.c_str());
 				if (dwAttr == INVALID_FILE_ATTRIBUTES)
 					return false;
 				return true;
@@ -207,7 +307,7 @@ namespace xutil
 				if (!file_handle)
 					return nullptr;
 				size_low = GetFileSize(file_handle, &size_high);
-				map_handle = CreateFileMappingA(file_handle,
+				map_handle = CreateFileMapping(file_handle,
 					0, PAGE_READONLY, size_high, size_low, 0);
 				if (map_handle == 0)
 				{
@@ -228,6 +328,26 @@ namespace xutil
 			void operator()(void *handle, int64_t size = 0)
 			{
 				UnmapViewOfFile(handle);
+			}
+		};
+
+		struct get_env
+		{
+			std::string operator ()(const std::string &name)
+			{
+				char buffer[1024];
+				DWORD n = GetEnvironmentVariable(name.c_str(), buffer, sizeof(buffer));
+				if (!n)
+					return {};
+				return std::string(buffer, n);
+			}
+		};
+
+		struct set_env 
+		{
+			bool operator()(const std::string &name, const std::string &value)
+			{
+				return !!SetEnvironmentVariable(name.c_str(), value.c_str());
 			}
 		};
 	}

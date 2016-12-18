@@ -35,8 +35,11 @@
     <ClInclude Include="..\include\function_traits.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="xtest.hpp">
-      <Filter>unitests</Filter>
+    <ClInclude Include="..\include\detail\win_vfs.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\detail\unix_vfs.hpp">
+      <Filter>include\detail</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
