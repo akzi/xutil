@@ -1,6 +1,7 @@
 #pragma once
 #include <windows.h>
 #include <string>
+#include <vector>
 namespace xutil
 {
 	namespace vfs
@@ -11,7 +12,6 @@ namespace xutil
 			{
 				char zUser[1024];
 				DWORD nByte;
-				BOOL rc;
 				nByte = sizeof(zUser);
 				if (!GetUserName(zUser, &nByte))
 					return{};
@@ -66,16 +66,40 @@ namespace xutil
 			{
 				char buffer[2048] = { 0 };
 				GetCurrentDirectory(sizeof(buffer), buffer);
-				return std::string(buffer);
+				std::string result(buffer);
+				if (result.size() && (result.back() != '\\' || result.back() != '/'))
+					result.push_back('\\');
+				return std::move(result);
 			}
 		};
 		struct mkdir
 		{
-			bool operator()(const std::string &path)
+			bool operator()(const std::string &path,bool p = true)
 			{
-				return CreateDirectory(path.c_str(), 0);
+				if(!p)
+					return !!CreateDirectory(path.c_str(), 0);
+
+				std::size_t offset = 0;
+				do {
+
+					auto pos = path.find_first_of('\\', offset);
+					if (pos == std::string::npos)
+						pos = path.find_first_of('/', offset);
+					if (pos == std::string::npos)
+					{
+						return !!CreateDirectory(path.c_str(), NULL) || ERROR_ALREADY_EXISTS == GetLastError();
+					}
+					else {
+						auto parent_dir = path.substr(0, pos);
+						offset = pos + 1;
+						if (!!CreateDirectory(parent_dir.c_str(), NULL) || ERROR_ALREADY_EXISTS == GetLastError())
+							continue;
+						return false;
+					}
+				} while (true);
 			}
 		};
+		
 		struct rmdir
 		{
 			bool operator()(const std::string &path)
@@ -91,7 +115,7 @@ namespace xutil
 				dwAttr = GetFileAttributes(path.c_str());
 				if (dwAttr == INVALID_FILE_ATTRIBUTES)
 					return false;
-				return (dwAttr & FILE_ATTRIBUTE_DIRECTORY);
+				return !!(dwAttr & FILE_ATTRIBUTE_DIRECTORY);
 			}
 		};
 		struct rename
@@ -161,7 +185,6 @@ namespace xutil
 					dwBytesPerSect,
 					dwFreeClusters,
 					dwTotalClusters;
-				BOOL rc;
 				std::string buffer;
 				auto pos = path.find_first_of('\\');
 				if (pos == std::string::npos)
@@ -183,6 +206,46 @@ namespace xutil
 			}
 
 		};
+		struct file_type
+		{
+			enum type
+			{
+				e_file,
+				e_dir,
+				e_link,
+				e_block,
+				e_unknown,
+			};
+
+			type operator()(const std::string &path)
+			{
+				DWORD dwAttr;
+				dwAttr = GetFileAttributes(path.c_str());
+				if (dwAttr == INVALID_FILE_ATTRIBUTES)
+				{
+					return type::e_unknown;
+				}
+				if (dwAttr & (FILE_ATTRIBUTE_HIDDEN |
+					FILE_ATTRIBUTE_NORMAL |
+					FILE_ATTRIBUTE_ARCHIVE))
+				{
+					return type::e_file;
+				}
+				else if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
+				{
+					return type::e_dir;
+				}
+				else if (dwAttr & FILE_ATTRIBUTE_REPARSE_POINT)
+				{
+					return type::e_link;
+				}
+				else if (dwAttr & (FILE_ATTRIBUTE_DEVICE))
+				{
+					return type::e_block;
+				}
+				return type::e_unknown;
+			}
+		};
 		struct is_file 
 		{
 			bool operator()(const std::string zPath)
@@ -192,7 +255,46 @@ namespace xutil
 				{
 					return false;
 				}
-				return (dwAttr & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE));
+				return !!(dwAttr & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE));
+			}
+		};
+		struct ls_files
+		{
+			std::vector<std::string> operator()(const std::string &path, std::size_t depth = 1)
+			{
+				std::vector<std::string> files;
+				WIN32_FIND_DATA find_data;
+				HANDLE handle = ::FindFirstFile((path + "*.*").c_str(), &find_data);
+				if (INVALID_HANDLE_VALUE == handle)
+					return{};
+				while (TRUE)
+				{
+					std::string filename(find_data.cFileName);
+					std::string realpath;
+					if (path.size() &&(path.back() == '\\' || path.back() == '/'))
+						realpath = path + filename;
+					else
+						realpath = path + "/" + filename;
+
+					auto type = file_type()(realpath);
+					if (type == file_type::e_file)
+					{
+						files.emplace_back(realpath);
+					}
+					else if (type == file_type::e_dir )
+					{
+						if (filename != "." && filename != ".." && depth > 1)
+						{
+							auto tmp = ls_files()(realpath + "/", depth - 1);
+							for (auto &itr : tmp)
+								files.emplace_back(std::move(itr));
+						}
+					}
+					if (!FindNextFile(handle, &find_data))
+						break;
+				}
+				FindClose(handle);
+				return files;
 			}
 		};
 		struct is_link 
@@ -204,7 +306,7 @@ namespace xutil
 				{
 					return false;
 				}
-				return (dwAttr & FILE_ATTRIBUTE_REPARSE_POINT);
+				return !!(dwAttr & FILE_ATTRIBUTE_REPARSE_POINT);
 			}
 		};
 		struct is_writable
@@ -243,46 +345,7 @@ namespace xutil
 				return true;
 			}
 		};
-		struct file_type
-		{
-			enum type
-			{
-				e_file,
-				e_dir,
-				e_link,
-				e_block,
-				e_unknown,
-			};
-
-			type operator()(const std::string &path)
-			{
-				DWORD dwAttr;
-				dwAttr = GetFileAttributes(path.c_str());
-				if (dwAttr == INVALID_FILE_ATTRIBUTES)
-				{
-					return type::e_unknown;
-				}
-				if (dwAttr & (FILE_ATTRIBUTE_HIDDEN | 
-								FILE_ATTRIBUTE_NORMAL | 
-								FILE_ATTRIBUTE_ARCHIVE))
-				{
-					return type::e_file;
-				}
-				else if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
-				{
-					return type::e_dir;
-				}
-				else if (dwAttr & FILE_ATTRIBUTE_REPARSE_POINT)
-				{
-					return type::e_link;
-				}
-				else if (dwAttr & (FILE_ATTRIBUTE_DEVICE))
-				{
-					return type::e_block;
-				}
-				return type::e_unknown;
-			}
-		};
+		
 		struct file_exists
 		{
 			bool operator()(const std::string &path)

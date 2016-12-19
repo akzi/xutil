@@ -41,5 +41,16 @@
     <ClInclude Include="..\include\detail\unix_vfs.hpp">
       <Filter>include\detail</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\detail\vfs_impl.hpp">
+      <Filter>include\detail</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\vfs.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="vfs_unit_test.cpp">
+      <Filter>unitests</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

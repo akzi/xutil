@@ -1,19 +1,19 @@
 #pragma once
-#include <string>
 #include <sys/types.h>
-#include <limits.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <pwd.h>
 #include <grp.h>
 #include <dirent.h>
-#include <utime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <vector>
+
+
 namespace xutil
 {
 	struct chdir
@@ -28,18 +28,38 @@ namespace xutil
 		std::string operator()()
 		{
 			char buffer[4096];
-			char *result;
-			result = ::getcwd(buffer, sizeof(buffer));
-			if (result == 0)
+			if (!getcwd(buffer, sizeof(buffer)))
 				return{};
-			return std::string(result);
+			std::string result(buffer);
+			if (result.size() && (result.back() != '\\' || result.back() != '/'))
+				result.push_back('/');
+			return std::move(result);
 		}
 	};
 	struct mkdir
 	{
-		bool operator()(const std::string &path, int mode = 0777)
+		bool operator()(const std::string &path, bool p = true, int mode = 0777)
 		{
-			return !::mkdir(path.c_str(), mode);
+			if(!p)
+				return !::mkdir(path.c_str(), mode);
+			std::size_t offset = 0;
+			do {
+
+				auto pos = path.find_first_of('\\', offset);
+				if (pos == std::string::npos)
+					pos = path.find_first_of('/', offset);
+				if (pos == std::string::npos)
+				{
+					return !::mkdir(path.c_str(), mode);
+				}
+				else {
+					auto parent_dir = path.substr(0, pos);
+					offset = pos + 1;
+					if(!::mkdir(parent_dir.c_str(), mode))
+						continue;
+					return false;
+				}
+			} while (true);
 		}
 	};
 	struct rmdir
@@ -211,6 +231,38 @@ namespace xutil
 				return type::e_fifo;
 			}
 			return type::e_unknown;
+		}
+	};
+	struct ls_files
+	{
+		std::vector<std::string> operator()(const std::string &path, std::size_t depth = 1) 
+		{
+			std::vector<std::string> files;
+			DIR *pDir = ::opendir(path.c_str());
+			struct dirent *ent;
+			while ((ent = readdir(pDir)) != NULL)
+			{
+				std::string name(ent->d_name);
+				std::string realpath;
+				if (path.back() == '\\' || path.back() == '/')
+					realpath = path + ename;
+				else
+					realpath = path + "/" + path;
+
+				if (ent->d_type & DT_DIR)
+				{
+					if (name == "." || name == ".." || 1 == depth)
+						continue;
+					auto tmp = ls_files()(realpath + "/", depth - 1);
+					for (auto &itr : tmp)
+						files.emplace_back(std::move(itr));
+				}
+				else if(ent->d_type & DT_REG)
+				{
+					files.emplace_back(std::move(name));
+				}
+			}
+			return std::move(files);
 		}
 	};
 
