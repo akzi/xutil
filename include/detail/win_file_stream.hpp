@@ -118,7 +118,10 @@ namespace xutil
 				BOOL rc;
 				rc = ReadFile(handle_, buffer, (DWORD)to_reads, &nRd, 0);
 				if (!rc)
+				{
+					std::cout << GetLastError() << std::endl;
 					return -1;
+				}
 				return (int64_t)nRd;
 			}
 			int64_t write(const void *buffer, int64_t len)
@@ -168,7 +171,6 @@ namespace xutil
 			{
 				DWORD low_bytes = 0, high_bytes = 0;
 				OVERLAPPED dummy;
-				BOOL rc;
 				memset(&dummy, 0, sizeof(dummy));
 
 				DWORD flags = LOCKFILE_FAIL_IMMEDIATELY;
@@ -196,7 +198,6 @@ namespace xutil
 			{
 				LONG high_offset;
 				DWORD pos;
-				BOOL rc;
 				high_offset = (LONG)(offset >> 32);
 				pos = SetFilePointer(handle_, (LONG)offset, &high_offset, FILE_BEGIN);
 				if (pos == INVALID_SET_FILE_POINTER)
