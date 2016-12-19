@@ -4,8 +4,8 @@ namespace xutil
 {
 	struct guard
 	{
-		guard(std::function<void()> &&func)
-			:func_(std::move(func))
+		guard(const std::function<void()> &func)
+			:func_(func)
 		{
 			
 		}
