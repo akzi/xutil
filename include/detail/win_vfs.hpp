@@ -26,7 +26,7 @@ namespace xutil
 			}
 		};
 
-		struct temp_dir
+		struct tempdir
 		{
 			std::string operator()()
 			{
@@ -297,7 +297,7 @@ namespace xutil
 		};
 		struct mmap
 		{
-			void *operator ()(const std::string &path, int64_t &pSize)
+			void *operator ()(const std::string &path, int64_t &size)
 			{
 				DWORD size_low, size_high;
 				HANDLE file_handle, map_handle;
@@ -314,9 +314,9 @@ namespace xutil
 					CloseHandle(file_handle);
 					return nullptr;
 				}
-				pSize = ((int64_t)size_high << 32) | size_low;
+				size = ((int64_t)size_high << 32) | size_low;
 				map = MapViewOfFile(map_handle, 
-					FILE_MAP_READ, 0, 0, (SIZE_T)(pSize));
+					FILE_MAP_READ, 0, 0, (SIZE_T)(size));
 				CloseHandle(map_handle);
 				CloseHandle(file_handle);
 				return map;
