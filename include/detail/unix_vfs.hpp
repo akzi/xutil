@@ -28,7 +28,7 @@ namespace xutil
 		std::string operator()()
 		{
 			char buffer[4096];
-			if (!getcwd(buffer, sizeof(buffer)))
+			if (!::getcwd(buffer, sizeof(buffer)))
 				return{};
 			std::string result(buffer);
 			if (result.size() && (result.back() != '\\' || result.back() != '/'))
@@ -175,7 +175,7 @@ namespace xutil
 	{
 		bool operator()(const std::string &path)
 		{
-			return !::access(zPath, W_OK);
+			return !::access(path.c_str(), W_OK);
 		}
 	};
 
@@ -245,7 +245,7 @@ namespace xutil
 				std::string name(ent->d_name);
 				std::string realpath;
 				if (path.back() == '\\' || path.back() == '/')
-					realpath = path + ename;
+					realpath = path + name;
 				else
 					realpath = path + "/" + path;
 
@@ -282,7 +282,7 @@ namespace xutil
 	{
 		bool operator()(const std::string &name, const std::string &value)
 		{
-			return !::setenv(name.c_str(), value.c_str());
+			return !::setenv(name.c_str(), value.c_str(), 1);
 		}
 
 	};
@@ -299,8 +299,7 @@ namespace xutil
 				return nullptr;
 			}
 			fstat(fd, &st);
-			map = mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_FILE, fd, 0);
-			rc = JX9_OK;
+			map = ::mmap(0, st.st_size, PROT_READ, MAP_PRIVATE | MAP_FILE, fd, 0);
 			if (map == MAP_FAILED) 
 			{
 				return nullptr;

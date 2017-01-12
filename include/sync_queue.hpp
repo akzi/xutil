@@ -12,7 +12,6 @@ namespace xutil
 		{
 		}
 
-		template<typename T>
 		void push(T &&item)
 		{
 			std::unique_lock<std::mutex> locker(mtex_);
@@ -20,7 +19,6 @@ namespace xutil
 			cv_.notify_one();
 		}
 
-		template<typename T>
 		bool pop(T &t, int timeout_mills = 0)
 		{
 			std::unique_lock<std::mutex> locker(mtex_);
