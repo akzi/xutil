@@ -60,7 +60,7 @@ namespace xutil
 			{
 				return handle_ == INVALID_HANDLE_VALUE;
 			}
-			bool open(const std::string &filepath, int mode = open_mode::OPEN_RDONLY)
+			bool open(const std::string &filepath, int mode = open_mode::OPEN_CREATE)
 			{
 				DWORD type = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
 				DWORD access = GENERIC_READ;
