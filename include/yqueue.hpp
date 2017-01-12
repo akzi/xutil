@@ -12,7 +12,7 @@ namespace xutil
 			begin_chunk = new chunk_t;
 			assert(begin_chunk);
 			begin_pos = 0;
-			back_chunk = NULL;
+			back_chunk = nullptr;
 			back_pos = 0;
 			end_chunk = begin_chunk;
 			end_pos = 0;
@@ -22,7 +22,7 @@ namespace xutil
 		{
 			while (true) {
 				if (begin_chunk == end_chunk) {
-					free(begin_chunk);
+					delete(begin_chunk);
 					break;
 				}
 				chunk_t *o = begin_chunk;
@@ -30,7 +30,7 @@ namespace xutil
 				delete(o);
 			}
 
-			chunk_t *sc = spare_chunk.exchange(NULL);
+			chunk_t *sc = spare_chunk.exchange(nullptr);
 			delete (sc);
 		}
 		inline T &front()
@@ -49,7 +49,7 @@ namespace xutil
 			if (++end_pos != N)
 				return;
 
-			chunk_t *sc = spare_chunk.exchange(NULL);
+			chunk_t *sc = spare_chunk.exchange(nullptr);
 			if (sc) {
 				end_chunk->next = sc;
 				sc->prev = end_chunk;
@@ -67,7 +67,7 @@ namespace xutil
 			if (++begin_pos == N) {
 				chunk_t *o = begin_chunk;
 				begin_chunk = begin_chunk->next;
-				begin_chunk->prev = NULL;
+				begin_chunk->prev = nullptr;
 				begin_pos = 0;
 				chunk_t *cs = spare_chunk.exchange(o);
 				delete (cs);
@@ -77,8 +77,8 @@ namespace xutil
 		struct chunk_t
 		{
 			T values[N];
-			chunk_t *prev;
-			chunk_t *next;
+			chunk_t *prev = nullptr;
+			chunk_t *next = nullptr;
 		};
 		chunk_t *begin_chunk;
 		int begin_pos;

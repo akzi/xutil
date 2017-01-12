@@ -40,7 +40,7 @@ namespace xutil
 			if (&queue_.front() != r_ && r_)
 				return true;
 			T *l_value = &queue_.front();
-			c_.compare_exchange_strong(l_value, NULL);
+			c_.compare_exchange_strong(l_value, nullptr);
 			r_ = l_value;
 			if (&queue_.front() == r_ || !r_)
 				return false;
@@ -56,9 +56,9 @@ namespace xutil
 		}
 	private:
 		yqueue <T, N> queue_;
-		T *w_;
-		T *r_;
-		T *f_;
+		T *w_ = nullptr;
+		T *r_ = nullptr;
+		T *f_ = nullptr;
 		std::atomic<T*> c_;
 		ypipe(const ypipe&) = delete;
 		const ypipe &operator = (const ypipe&) = delete;
