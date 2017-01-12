@@ -29,7 +29,10 @@
     <ClInclude Include="..\include\functional.hpp" />
     <ClInclude Include="..\include\function_traits.hpp" />
     <ClInclude Include="..\include\make_index_sequence.hpp" />
+    <ClInclude Include="..\include\sync_queue.hpp" />
     <ClInclude Include="..\include\vfs.hpp" />
+    <ClInclude Include="..\include\xworker.hpp" />
+    <ClInclude Include="..\include\xworker_pool.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vfs_unit_test.cpp" />

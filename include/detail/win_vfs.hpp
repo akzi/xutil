@@ -67,9 +67,17 @@ namespace xutil
 				char buffer[2048] = { 0 };
 				GetCurrentDirectory(sizeof(buffer), buffer);
 				std::string result(buffer);
-				if (result.size() && (result.back() != '\\' || result.back() != '/'))
+				if (result.size() && (result.back() != '\\'))
 					result.push_back('\\');
-				return std::move(result);
+				std::string tmp;
+				for (auto &itr : result)
+				{
+					if (itr == '\\')
+						tmp.push_back('/');
+					else
+						tmp.push_back(itr);
+				}
+				return tmp;
 			}
 		};
 		struct mkdir
@@ -256,6 +264,41 @@ namespace xutil
 					return false;
 				}
 				return !!(dwAttr & (FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE));
+			}
+		};
+		struct ls 
+		{
+			std::vector<std::string> operator()(const std::string &path)
+			{
+				std::vector<std::string> lists;
+				WIN32_FIND_DATA find_data;
+				HANDLE handle = ::FindFirstFile((path + "*.*").c_str(), &find_data);
+				if (INVALID_HANDLE_VALUE == handle)
+					return{};
+				while (TRUE)
+				{
+					if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+					{
+						if(strcmp(find_data.cFileName, ".") == 0 || 
+							strcmp(find_data.cFileName, "..") == 0 )
+							lists.emplace_back(find_data.cFileName);
+						else
+						{
+							lists.emplace_back(find_data.cFileName);
+							lists.back().push_back('/');
+						}
+					}
+					else if (find_data.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN |
+						FILE_ATTRIBUTE_NORMAL |
+						FILE_ATTRIBUTE_ARCHIVE))
+					{
+						lists.emplace_back(find_data.cFileName);
+					}
+					if (!FindNextFile(handle, &find_data))
+						break;
+				}
+				FindClose(handle);
+				return lists;
 			}
 		};
 		struct ls_files

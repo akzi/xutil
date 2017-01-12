@@ -47,6 +47,15 @@
     <ClInclude Include="..\include\vfs.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\sync_queue.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\xworker.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\xworker_pool.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vfs_unit_test.cpp">
