@@ -16,6 +16,9 @@
 
 namespace xutil
 {
+namespace vfs
+{
+
 	struct chdir
 	{
 		bool operator()(const std::string &path)
@@ -265,6 +268,30 @@ namespace xutil
 			return std::move(files);
 		}
 	};
+	
+	
+	struct ls
+	{
+		std::vector<std::string> operator()(const std::string &path) 
+		{
+			std::vector<std::string> files;
+			DIR *pDir = ::opendir(path.c_str());
+			struct dirent *ent;
+			while ((ent = readdir(pDir)) != NULL)
+			{
+				std::string name(ent->d_name);
+				if (ent->d_type & DT_DIR)
+				{
+					files.emplace_back(std::move(name + "/"));
+				}
+				else if(ent->d_type & DT_REG)
+				{
+					files.emplace_back(std::move(name));
+				}
+			}
+			return std::move(files);
+		}
+	};
 
 	struct getenv
 	{
@@ -352,5 +379,5 @@ namespace xutil
 		}
 	};
 
-
+}
 }
