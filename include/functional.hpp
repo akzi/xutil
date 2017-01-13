@@ -1,9 +1,25 @@
 #pragma once
 #include <string.h>
+#include <time.h>
 namespace xutil
 {
 	namespace functional
 	{
+		struct gmtime
+		{
+			struct tm operator()(time_t _time = time(nullptr))
+			{
+				struct tm gmt = { 0 };
+#if defined _MSC_VER
+				gmtime_s(&gmt, &_time);
+#else
+				gmtime_r(&_time, &gmt);
+#endif 
+				return gmt;
+			}
+		};
+
+
 		struct get_filename
 		{
 			std::string operator ()(const std::string &filepath)
@@ -17,7 +33,18 @@ namespace xutil
 				return filepath.substr(pos, filepath.size() - pos);
 			}
 		};
-		
+
+		struct get_rfc1123
+		{
+			std::string operator()(time_t _time = time(nullptr))
+			{
+				auto gmt = gmtime()(_time);
+				char buf[64] = {0};
+				strftime(buf, 64 - 1, "%a, %d %b %Y %H:%M:%S GMT", &gmt);
+				return buf;
+			}
+		};
+
 		struct get_extension
 		{
 			std::string operator()(const std::string &file)
