@@ -1,5 +1,5 @@
 #pragma once
-#include <string.h>
+#include <cstring>
 #include <time.h>
 namespace xutil
 {
@@ -9,7 +9,8 @@ namespace xutil
 		{
 			struct tm operator()(time_t _time = time(nullptr))
 			{
-				struct tm gmt = { 0 };
+				struct tm gmt;
+				std::memset(&gmt, 0, sizeof(gmt));
 #if defined _MSC_VER
 				gmtime_s(&gmt, &_time);
 #else
