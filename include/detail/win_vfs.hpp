@@ -279,9 +279,9 @@ namespace xutil
 				{
 					if (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
 					{
-						if(strcmp(find_data.cFileName, ".") == 0 || 
-							strcmp(find_data.cFileName, "..") == 0 )
-							lists.emplace_back(find_data.cFileName);
+						if (strcmp(find_data.cFileName, ".") == 0 ||
+							strcmp(find_data.cFileName, "..") == 0)
+							;
 						else
 						{
 							lists.emplace_back(find_data.cFileName);

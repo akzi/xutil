@@ -282,7 +282,8 @@ namespace vfs
 				std::string name(ent->d_name);
 				if (ent->d_type & DT_DIR)
 				{
-					files.emplace_back(std::move(name + "/"));
+					if(!(name == "." || name == "."))
+						files.emplace_back(std::move(name + "/"));
 				}
 				else if(ent->d_type & DT_REG)
 				{
