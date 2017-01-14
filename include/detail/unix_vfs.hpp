@@ -96,16 +96,6 @@ namespace vfs
 			return !::access(path.c_str(), F_OK);
 		}
 	};
-	struct file_size
-	{
-		int64_t operator()(const std::string &path)
-		{
-			struct stat st;
-			if (::stat(path.c_str(), &st) != 0)
-				return -1;
-			return (int64_t)st.st_size;
-		}
-	};
 	struct realpath 
 	{
 		std::string operator()(const std::string &path)
