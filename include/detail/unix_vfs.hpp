@@ -294,6 +294,28 @@ namespace vfs
 		}
 	};
 
+	struct last_modified
+	{
+		int64_t operator()(const std::string &filepath)
+		{
+			struct stat st;
+			if (stat(filepath.c_str(), &st) != 0)
+				return -1;
+			return (int64_t)st.st_mtime;
+		}
+	};
+
+	struct file_size
+	{
+		int64_t operator()(const std::string &filepath)
+		{
+			struct stat st;
+			if (stat(filepath.c_str(), &st) != 0)
+				return -1;
+			return (int64_t)st.st_size;
+		}
+	};
+
 	struct getenv
 	{
 		std::string operator()(const std::string &name)

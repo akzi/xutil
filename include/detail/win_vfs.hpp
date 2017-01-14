@@ -388,7 +388,52 @@ namespace xutil
 				return true;
 			}
 		};
-		
+		struct  to_time
+		{
+			static constexpr int64_t TICKS_PER_SECOND = 10000000;
+			static constexpr int64_t EPOCH_DIFFERENCE = 11644473600LL;
+			int64_t operator()(FILETIME pTime)
+			{
+				int64_t input, temp;
+				input = pTime.dwHighDateTime;
+				input <<= 32;
+				input += pTime.dwLowDateTime;
+				temp = input / TICKS_PER_SECOND;
+				temp = temp - EPOCH_DIFFERENCE;
+				return temp;
+			}
+		};
+		struct last_modified
+		{
+			int64_t operator()(const std::string &filepath)
+			{
+				BY_HANDLE_FILE_INFORMATION sInfo;
+				HANDLE pHandle= open_read_only()(filepath);
+				if (pHandle == 0)
+					return -1;
+				if (!GetFileInformationByHandle(pHandle, &sInfo))
+					return -1;
+				CloseHandle(pHandle);
+				return to_time()(sInfo.ftLastWriteTime);
+			}
+		};
+
+		struct file_size 
+		{
+			int64_t operator()(const std::string &filepath)
+			{
+				DWORD dwLow, dwHigh;
+				HANDLE handle = open_read_only()(filepath);
+				if (!handle)
+					return -1;
+				dwLow = GetFileSize(handle, &dwHigh);
+				CloseHandle(handle);
+				int64_t nSize = dwHigh;
+				nSize <<= 32;
+				nSize += dwLow;
+				return nSize;
+			}
+		};
 		struct file_exists
 		{
 			bool operator()(const std::string &path)
